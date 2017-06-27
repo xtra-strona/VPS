@@ -6,7 +6,16 @@ ssh-keygen -R ADRES_IP_SERWERA => Usuwamy Stary Odcisk Klucza w pliku ~/.ssh/kno
 **********************************************************************************************
 
 1 - PODSTAWOWE POŁACZENIE SSH NA KONCIE ROOT
+
 ssh root@ADRES_IP_SERWERA
+
+-- Zmieńmy Podstawowe Hasło na Bardziej Przyjazne --
+passwd => Zmiana Hasła ( Czasem należy podać poprzednie lub urzyć sudo passwd )
+exit
+
+-- Zalogujmy się na nowym Haśle --
+ssh root@ADRES_IP_SERWERA
+nowe_hasło
 
 2 - UPDATE PAKIETÓW DO NAJNOWSZYCH WERSJI 
 Aktualizacja listy dostępnych pakietów ( update ) oraz aktualizacja pakietów isniejących do najnowszych wersji ( upgrade )
@@ -15,7 +24,7 @@ sudo apt-get dist-upgrade
 
 3 - INSTALACJA NIEKTÓRYCH PAKIETÓW
 sudo apt-get install vim => Edytor
-sudo apt-get install htop => Lista Procesów
+sudo apt-get install htop => Lista Procesów ( wpisz po prostu htop oraz jeśli chcesz wyjść to CTRL + C )
 
 ******** FIREWALL ********
 sudo apt-get install ufw => Defoltowy Firewall
@@ -83,15 +92,20 @@ ssh root@ADRES_IP_SERWERA
 
     ssh nazwa_nowego_użytkownika@ADRES_IP_SERWERA
 
--- Otwórz plik --
+-- Otwórz Plik sshd_config Oraz Zmień Wartości Jak Poniżej--
 
 sudo vim /etc/ssh/sshd_config
 i => Edycja w programie vim
 
+ -- Zmienimy Te Wartości aby móc łączyć się tylko za pomocą utworzonych Kluczy --
+
 PubkeyAuthentication yes
 PasswordAuthentication no
 ChallengeResponseAuthentication no
-Port 50433 => Dynamiczne i / lub prywatne porty to porty od 49152 do 65535 i najlepiej tych używać
+
+ -- Dynamiczne i / lub prywatne porty to porty od 49152 do 65535 i najlepiej tych używać ( ja dodałem 50433 ) --
+
+Port 50433
 
 ESC => Wyjście z Trybu Edycji w edytorze Vim
 :wq! => Write(w) Quit(q) Przymusowe Wykonanie Polecenia(!) 
@@ -116,4 +130,6 @@ ssh root@ADRES_IP_SERWERA => Powinno być ( ssh: connect to host 123.115.210.44 
 ssh root@ADRES_IP_SERWERA -p 50433 => Powinno być ( Permission denied (publickey) ) -- ponieważ dla roota nie dodaliśmy połączenia poprzez klucze
 
 ******** JEŚLI WSZYSTKO JEST OK TO POWINIENEŚ SIĘ POPRAWNIE ŁĄCZYĆ POPRZEZ PORT 50433 NA KONCIE UTWORZONEGO USERA :) ***********  
+
+
 
