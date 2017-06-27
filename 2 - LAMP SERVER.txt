@@ -1,0 +1,116 @@
+*********** INSTALACJA Linux, Apache, MySQL, PHP (LAMP) NA UNUNTU SERVER 16.04  ***********
+
+1 - INSTALUJEMY ORAZ AKTYWUJEMY APACHA
+
+sudo apt-get update 
+sudo apt-get upgrade
+sudo apt-get install apache2
+
+2 - KONFIGURUJEMY FIREWALL ABY ZAPORA UMOŻLIWIŁA RUCH HTTP i HTTPS ( PROFIL APACHA ) 
+
+-- Lista Aplikacji --
+sudo ufw app list
+
+-- Info Aplikacji --
+sudo ufw app info "Apache Full"
+
+-- Zezwalamy na Apache --
+sudo ufw allow in "Apache Full"
+
+-- Idziemy Do Adresu Naszej Strony --
+http://ip_adress/lub_domena.pl
+
+3 - MYSQL
+
+sudo apt-get install mysql-server
+mysql -u root -p => sprawdźmy czy podłączyliśmy się poprawnie oraz
+exit => wyjście z konsoli MYSQL
+
+***** ZABEZPIECZENIE MYSQL *****
+mysql_secure_installation
+VALIDATE PASSWORD PLUGIN => Walidacja Hasła dla roota jeśli jest mocne to dajemy n
+
+Change the password for root ? ((Press y|Y for Yes, any other key for No) : => Dajemy n ( Pozostawiamy poprzednie chasło hyba że chcemy zmienić )
+
+RESZTA NA y => po prostu y i ENTER
+
+mysql -u root -p => Sprawdźmy jescze raz podając hasło oraz
+exit => wyjście z konsoli MYSQL
+
+4 - INSTALACJA PHP 7 
+
+sudo apt-get install php libapache2-mod-php php-mcrypt php-mysql
+LUB sudo apt-get install php libapache2-mod-php php-mcrypt php-mysql -y ( y - wszystko potwierdzamy )
+php -v => Sprawdzamy Zainstalowaną Wersję PHP 
+
+5 - TERAZ ZMIEŃMY ABY APACHE DEFOLTOWO SZUKAŁ PLIKU index.php zamiast index.html
+
+sudo vim /etc/apache2/mods-enabled/dir.conf
+i => Vim Wchodzenie W tryb Edycji
+<IfModule mod_dir.c>
+        DirectoryIndex index.php index.html index.cgi index.pl index.xhtml index.htm
+</IfModule>
+ESC => Wyjście z Trybu Edycji w edytorze Vim
+:wq! => Write(w) Quit(q) Przymusowe Wykonanie Polecenia(!)  
+
+sudo systemctl restart apache2
+sudo systemctl status apache2
+
+6 - STWÓRZMY PRZYKŁADOWY DOKUMENT
+
+sudo vim /var/www/html/index.php
+i => Vim Wchodzenie W tryb Edycji
+
+<!DOCTYPE html>
+<html>
+
+  <head>
+    <title>Moja Pierwsza Strona</title>
+  </head>
+
+<body>
+
+<h1>Witam Na Stronie</h1>
+
+</body>
+
+</html>
+
+ESC => Wyjście z Trybu Edycji w edytorze Vim
+:wq! => Write(w) Quit(q) Przymusowe Wykonanie Polecenia(!) 
+
+http://twoje_ip lub domena
+
+7 - INSTALACJA MODÓŁÓW PHP
+
+apt-cache search php- | less => Sprawdzamy dostępne moduły
+q => Wyjście Quit( q )
+apt-cache show php-cli => pokaż info pakietu
+sudo apt-get install php-cli => Zainstalujmy php-cli
+sudo apt-get install package1 package2 ... => TAK INSTALUJEMY RÓŻNE PAKIETY
+
+8 - INFO PHP
+
+sudo vim /var/www/html/info.phpfree -m
+i => Vim Wchodzenie W tryb Edycji
+<?php
+phpinfo();
+?>
+ESC => Wyjście z Trybu Edycji w edytorze Vim
+:wq! => Write(w) Quit(q) Przymusowe Wykonanie Polecenia(!)
+
+PRZEJDŹMY DO NASZEJ DOMENY I SPRAWDŹMY INFORMACJE O NASZYM PHP
+http://twoje_ip lub domena/info.php
+
+9 - USUŃ NA KONIEC PLIKI
+sudo rm info.php index.html
+exit
+
+***************************************** 
+--- PRZYDATNE POLECENIA ---
+
+free -m => Ile Mamy Pamięci
+top => Procesy
+htop => Lista Procesów
+
+

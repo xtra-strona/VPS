@@ -25,6 +25,7 @@ sudo apt-get dist-upgrade
 3 - INSTALACJA NIEKTÓRYCH PAKIETÓW
 sudo apt-get install vim => Edytor
 sudo apt-get install htop => Lista Procesów ( wpisz po prostu htop oraz jeśli chcesz wyjść to CTRL + C )
+sudo apt-get install mc => Midnight Commander ( Jest to menadżer plików jak i edytor tekstu dużo łatwiejszy w obsłudze niż vim czy nano )
 
 ******** FIREWALL ********
 sudo apt-get install ufw => Defoltowy Firewall
