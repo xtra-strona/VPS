@@ -1,0 +1,119 @@
+ ( KONFIGURACJA SERWERA VPS DLA UBUNTU LUB DEBIANA ... UŻYWAŁEM UBUNTU SERWER 16.04 ORAZ DEBIAN 9 ( STRETCH ))
+
+**********************************************************************************************
+KŁOPOTY Z POŁĄCZENIEM SSH ( JEŻELI MAMY UTWORZONE KLUCZE ) !!!
+ssh-keygen -R ADRES_IP_SERWERA => Usuwamy Stary Odcisk Klucza w pliku ~/.ssh/known_hosts
+**********************************************************************************************
+
+1 - PODSTAWOWE POŁACZENIE SSH NA KONCIE ROOT
+ssh root@ADRES_IP_SERWERA
+
+2 - UPDATE PAKIETÓW DO NAJNOWSZYCH WERSJI 
+Aktualizacja listy dostępnych pakietów ( update ) oraz aktualizacja pakietów isniejących do najnowszych wersji ( upgrade )
+sudo apt-get update && sudo apt-get-upgrade
+sudo apt-get dist-upgrade
+
+3 - INSTALACJA NIEKTÓRYCH PAKIETÓW
+sudo apt-get install vim => Edytor
+sudo apt-get install htop => Lista Procesów
+
+******** FIREWALL ********
+sudo apt-get install ufw => Defoltowy Firewall
+sudo ufw allow OpenSSH => Możemy się Logować
+sudo ufw enable => Enable Włączony
+sudo ufw app list => Zobaczymy listę obsługiwanych aaplikacji
+sudo ufw status => Sprawdzamy Status
+
+******** WYŁĄCZANIE FIREWALLA ORAZ RESETOWANIE ********
+sudo ufw disable
+sudo ufw reset
+
+4 - DODAJEMY NOWEGO UŻYTKOWNIKA W CELU MNIEJSZEGO ZAGROŻENIA NA HASŁO ROOT
+adduser nazwa_użytkownika
+
+******** W kolejnych oknach podajemy Hasło oraz jeśli chcemy to uzupełniamy resztę danych ********
+
+5 - DODAWANIE PRAW ROOT NOWEMU UŻYTKOWNIKOWI
+usermod -aG sudo nazwa_użytkownika
+
+******** Dodaliśmy użytkownika do Grupy Sudo ( a => append przyłącz )( do G ( grupy o nazwie sudo ) ********
+******** Teraz podany wyżej użytkownik może wykonywać polecenia z uprawnieniami „super user”! ********
+
+******** SPRAWDŹ CZY UŻYTKOWNIK JEST W GRUPIE sudo ********
+groups nazwa_użytkownika
+sudo apt-get update => Jeśli mamy uprawnienia to spokojnie możemy updatować system
+
+******** SPRAWDŹMY POŁĄCZENIE ZA POMOCĄ UTWORZONEGO USERA W NOWYM OKNIE ( CTRL + ALT + T ) ********
+ssh nazwa_użytkownika@ADRES_IP_SERWERA
+
+6 - DODAJ UWIERZYTELNIANIE KLUCZA PUBLICZNEGO ( bezpieczne połączenie ) NA NASZEJ LOKALNEJ MASZYNIE
+
+CTRL + ALT + T => Włączamy Terminal oraz:
+
+ssh-keygen => Tworzymy klucze uwierzytelniające
+
+******** Jeśli chcecie to podajecie hasło ( Ja z reguły je tworzę dla lepszego zabezpieczenia ) ********
+
+Spowoduje to utworzenie klucza prywatnego, id_rsa i klucza publicznego id_rsa.pub w katalogu ~/.ssh katalogu domowego localusera. Pamiętaj, że prywatny klucz nie powinien być udostępniany osobom, które nie powinny mieć dostępu do swoich serwerów!
+
+KLUCZE BĘDĄ W TYM KATALOGU
+cd ~/.ssh
+ls => Zobacz Katalog ... Najlepiej Skopiować na usb te klucze ...
+cat ~/.ssh/id_rsa.pub => Podgląd Pliku
+
+******** PRZESYŁAMY KLUCZE NA SERWER DO UTWORZONEGO UŻYTKOWNIKA ********  
+ssh-copy-id new_user_name@ADRES_IP_SERWERA
+
+******** SPRAWDZAMY POŁĄCZENIE ********
+-- Teraz powinniśmy się łączyć za pomocą hasła które utworzyliśmy w poprzednim kroku --
+ssh new_user_name@ADRES_IP_SERWERA
+
+exit
+
+-- Zauważcie że dalej możecie się połączyć defoltowym kontem root które dostaliście przy instalacji serwera --
+
+ssh root@ADRES_IP_SERWERA
+
+******** MUSIMY TO ZMIENIĆ DLA LEPSZEGO BEZPIECZEŃSTWA ... WIĘC ********
+
+ exit 
+
+******** WAŻNE => ZALOGUJ SIĘ W INNYM TERMINALU ( CTRL + ALT + T ) ORAZ POZOSTAW POPRZEDNIĄ SESJĘ OTWARTĄ ********
+******** USUŃMY ŁĄCZENIE ZA POMOCĄ ZWYKŁEGO HASŁA Z KONTA ROOT ********
+
+    ssh nazwa_nowego_użytkownika@ADRES_IP_SERWERA
+
+-- Otwórz plik --
+
+sudo vim /etc/ssh/sshd_config
+i => Edycja w programie vim
+
+PubkeyAuthentication yes
+PasswordAuthentication no
+ChallengeResponseAuthentication no
+Port 50433 => Dynamiczne i / lub prywatne porty to porty od 49152 do 65535 i najlepiej tych używać
+
+ESC => Wyjście z Trybu Edycji w edytorze Vim
+:wq! => Write(w) Quit(q) Przymusowe Wykonanie Polecenia(!) 
+
+******** NASTĘPNIE AKTYWACJA FIREWALLA ********
+sudo ufw allow 50433/tcp => Dodajemy Regułę Do Firewalla
+
+sudo ufw limit ssh/tcp comment 'Limit Połączeń dla ssh'
+sudo ufw limit 50433/tcp comment 'SSH Limit Połączeń'
+
+sudo ufw status => Sprawdzamy Status Włączonych Reguł
+
+sudo systemctl reload sshd =>  
+
+exit
+
+******** WAŻNE => ZALOGUJ SIĘ W INNYM TERMINALU ( CTRL + ALT + T ) ORAZ POZOSTAW POPRZEDNIĄ SESJĘ OTWARTĄ ********
+
+ssh new_user_name@ADRES_IP_SERWERA -p 50433 => Powinniśmy się poprawnie zalogować
+
+ssh root@ADRES_IP_SERWERA => Powinno być ( ssh: connect to host 123.115.210.44 port 22: Connection refused ) -- Wyłączyliśmy port 22
+ssh root@ADRES_IP_SERWERA -p 50433 => Powinno być ( Permission denied (publickey) ) -- ponieważ dla roota nie dodaliśmy połączenia poprzez klucze
+
+******** JEŚLI WSZYSTKO JEST OK TO POWINIENEŚ SIĘ POPRAWNIE ŁĄCZYĆ POPRZEZ PORT 50433 NA KONCIE UTWORZONEGO USERA :) ***********  
+
