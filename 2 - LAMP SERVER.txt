@@ -27,6 +27,7 @@ mysql -u root -p => sprawdźmy czy podłączyliśmy się poprawnie oraz
 exit => wyjście z konsoli MYSQL
 
 ***** ZABEZPIECZENIE MYSQL *****
+
 mysql_secure_installation
 VALIDATE PASSWORD PLUGIN => Walidacja Hasła dla roota jeśli jest mocne to dajemy n
 
@@ -93,9 +94,11 @@ sudo apt-get install package1 package2 ... => TAK INSTALUJEMY RÓŻNE PAKIETY
 
 sudo vim /var/www/html/info.phpfree -m
 i => Vim Wchodzenie W tryb Edycji
+
 <?php
 phpinfo();
 ?>
+
 ESC => Wyjście z Trybu Edycji w edytorze Vim
 :wq! => Write(w) Quit(q) Przymusowe Wykonanie Polecenia(!)
 
@@ -106,11 +109,46 @@ http://twoje_ip lub domena/info.php
 sudo rm info.php index.html
 exit
 
+*********** END :) ************* LAMP SERVER STARTING ************** 
+
 ***************************************** 
---- PRZYDATNE POLECENIA ---
+
+---- DODATKOWE INFO MYSQL ----
+ ## W RAZIE WŁĄCZNIA LUB WYŁĄCZANIA USŁUGI MYSQL TO NAJPRAWDOPODOBNIEJ BĘDZIECIE MUSIELI JĄ RESTARTOWAĆ ##
+
+### Restart Mysql ###
+sudo systemctl restart mysql
+# LUB
+sudo systemctl restart mysql.service
+
+### Start Mysql ###
+sudo systemctl start mysql
+# LUB
+sudo systemctl start mysql.service
+
+### Stop Mysql ###
+sudo systemctl stop mysql
+# LUB
+sudo systemctl stop mysql.service
+
+### Status usługi Mysql  ###
+sudo service mysql status 
+
+---- PRZYDATNE POLECENIA ----
 
 free -m => Ile Mamy Pamięci
 top => Procesy
-htop => Lista Procesów
+htop => Lista Procesów jeśli zainstalowaliśmy htop
 
+### VIM ### ***********************************************
+http://www.arturpyszczuk.pl/vimtutorial.html
+
+i => Wejście w tryb Edycji
+Esc => Wyjście z trybu Edycji
+:wq => Zapis oraz Wyjście ( write and quit )
+:q => Wyjście
+:q! => Wyjście z Wymuszeniem
+
+# LUB ZAPIS WYMUSZONY #
+:wq! => Zapis wymuszony
 

@@ -1,0 +1,140 @@
+************** PROCES INSTALACJI PHPMYADMIN **********
+1 - PODSTAWOWA INSTALACJA
+
+sudo apt-get update
+sudo apt-get install phpmyadmin php-mbstring php-gettext
+t => Enter
+
+wybierz apache2 => Naciśnij Spację oraz Tab i na koniec zatwierdź Enterem lub Spacją
+
+### Configure database for phpmyadmin with dbconfig-common? ###
+
+ YES => Spacja lub Enter 
+
+Oraz podaj Hasło które zakładałeś przy tworzeniu bazy danych mysql podwójnie => Hasło Tab Enter
+
+sudo phpenmod mcrypt
+sudo phpenmod mbstring
+
+### Restartujemy Usługę ###
+sudo systemctl restart apache2
+
+### PRZZECHODZIMY DO ADRESU PHPMYADMIN ###
+https://nazwa_domeny_lub_IP/phpmyadmin
+
+2 - ZABEZPIECZANIE BAZY MYSQL ORAZ KONTA PHPMYADMIN
+
+sudo vim /etc/apache2/conf-available/phpmyadmin.conf
+
+### NA POCZĄTEK ZMIENIMY DEFOLTOWY ADRES CZYLI ALIAS ###
+Alias /phpmyadmin /usr/share/phpmyadmin 
+
+ --- ZMIENIMY NA ( UserMysql ) MOŻECIE DAĆ NAZWĘ JAKĄ CHCECIE ( Adres url w którym zamiast phpmyadmin będzie UserMysql ) --- 
+Alias /UserMysql /usr/share/phpmyadmin
+
+### RESTART APACHE ###
+sudo systemctl restart apache2 
+
+--- Teraz nie Powinniśmy Mieć dostępu z adresu https://nazwa_domeny_lub_IP/phpmyadmin ---
+### TYLKO ###
+https://nazwa_domeny_lub_IP/UserMysql
+
+NASTĘPNIE DODAMY DYREKTYWĘ W .htaccess ABY MIEĆ PODWÓJNE ZABEZPIECZENIE HASŁEM DZIĘKI PLIKOWI .htpasswd
+
+sudo vim /etc/apache2/conf-available/phpmyadmin.conf
+
+ --- Musimy dodać dyrektywę AllowOverride All wewnątrz znacznika <Directory /usr/share/phpmyadmin> jak poniżej: ---
+
+        Options FollowSymLinks
+        DirectoryIndex index.php
+        AllowOverride All
+
+### RESTART APACHE ###
+sudo systemctl restart apache2
+
+### Tworzymy plik .htaccess wraz z Rgułami zabezpieczeń pliku .htpasswd ###
+sudo vim /usr/share/phpmyadmin/.htaccess
+
+### KOPIUJEMY LINIJKI ZABEZPIECZENIA JAK PONIŻEJ ###
+
+AuthType Basic
+AuthName "Restricted Files"
+AuthUserFile /etc/phpmyadmin/.htpasswd
+Require valid-user
+
+
+### TWORZYMY PLIK .htpasswd DLA AUTENTYKACJI ( LOGOWANIA ) --- Oraz Instalujemy Potrzebne Pakiety do wygenerowania zabezpieczenia .htpasswd ###
+sudo apt-get install apache2-utils
+
+--- GENERUJEMY ZABEZPIECZENIE .htpasswd w którym na końcu podajemy nazwę użytkownika czyli LOGIN ---
+sudo htpasswd -c /etc/phpmyadmin/.htpasswd user_name 
+
+--- New Password: podaj_hasło np: test*** ---
+
+### POWINNA BYĆ INFORMACJA ###
+--- Adding password for user alex => SUKCES ... DODALIŚMY NOWE ZABEZPIECZENIE WRAZ Z HASŁEM ---
+
+
+********PHPMYADMIN ZAINSTALOWANY ---- END :) ******************
+
+************** JEŚLI CHCESZ DODAĆ NOWEGO UŻYTKOWNIKA BEZ ( c ) 
+
+sudo htpasswd /etc/phpmyadmin/.htpasswd nowy_użytkownik
+
+****************************************************************************
+ ### !!!! JEŚLI COŚ POSZŁO NIE TAK !!!! ###
+
+sudo dpkg-reconfigure phpmyadmin
+
+a) Reinstall database for phpmyadmin? => YES
+b) Unix socket => OK => Tab I ENTER
+c) MySQL database name for phpmyadmin:  => phpmyadmin => Tab I ENTER
+d) MySQL username for phpmyadmin: => root =>  Tab I ENTER
+e) MySQL application password for phpmyadmin: => Twoje Hasło Do Mysql 2 Krotnie
+f) Name of the database's administrative user: => root =>  Tab I ENTER
+g) apache2 => Spacja => Tab I ENTER
+h) Błąd => OK => Enter
+i) Ignore => Tab I ENTER
+
+### LUB ###
+sudo vim /etc/phpmyadmin/config-db.php
+
+$dbuser='root';
+$dbpass='ZMIEŃ_HASŁO_NA_DEFOLTOWE_MYSQL';
+$basepath='';
+$dbname='phpmyadmin';
+$dbserver='localhost';
+$dbport='';
+$dbtype='mysql';
+
+
+### MOŻESZ RÓWNIEŻ OD NOWA SKONFIGUROWAĆ MYSQL ###
+sudo mysql_secure_installation
+
+### LUB USUŃ INSTALACJĘ MYSQL ORAZ PHPMYADMIN ###
+
+sudo apt-get remove dbconfig-mysql
+sudo apt-get purge mysql*
+sudo rm -rf /etc/mysql /var/lib/mysql
+
+sudo apt-get remove --purge phpmyadmin
+sudo rm /etc/phpmyadmin/config-db.php
+
+sudo apt-get autoremove
+sudo apt-get autoclean
+
+sudo apt-get dist-upgrade
+
+    ******** WTEDY DOPIERO ZAINSTALUJ MYSQL ORAZ PHPMYADMIN OD NOWA ********
+
+sudo apt-get install mysql-server
+mysql_secure_installation
+
+### ZALOGU I SPRAWDŹ ###
+mysql -u root -p
+exit
+
+### ZAINSTALUJ OD NOWA PHPMYADMIN ###
+sudo apt-get install phpmyadmin
+
+
