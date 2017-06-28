@@ -164,9 +164,14 @@ define( 'EMPTY_TRASH_DAYS', 0 ); // Zero days
 define( 'WP_POST_REVISIONS', 2 );
 
 // define( 'FORCE_SSL_ADMIN', true ); // JEŚLI CHCECIE SIĘ ŁĄCZYĆ ZA POMOCĄ SSL wp-admin
+// define('FORCE_SSL_LOGIN', true);  // JEŚLI CHCECIE SIĘ ŁĄCZYĆ ZA POMOCĄ SSL user
 
 /** JEŚLI CHCESZ MIEĆ MULTISITE TO ODKOMENTUJ **/
 // define( 'WP_ALLOW_MULTISITE', true );
+
+/** DODAJ ERROR REPORTING NA 0 **/
+error_reporting(0);
+@ini_set('display_errors', 0);
 
 /** KONIEC DEFINICJI **/
 
@@ -183,4 +188,137 @@ sudo chown -R user_name /var/www/html
 
 ### Restart apache2 ###
     sudo service apache2 restart
+
+
+9 - DODAJ REGUŁY ZABEZPIECZEŃ W PLIKU .htaccess
+https://www.acunetix.com/websitesecurity/wordpress-security-top-tips-secure-wordpress-application/
+https://premium.wpmudev.org/blog/htaccess/?imob=c&utm_expid=3606929-106.UePdqd0XSL687behGg-9FA.2&utm_referrer=https%3A%2F%2Fwww.google.pl%2F
+
+sudo vim /var/www/html/.htaccess
+
+# BEGIN WordPress
+
+<IfModule mod_rewrite.c>
+
+# ********** TEJ ZAWARTOŚCI NIE RUSZAJ *************************
+
+RewriteRule ^wp-admin/includes/ - [F,L]
+RewriteRule !^wp-includes/ - [S=3]
+RewriteRule ^wp-includes/[^/]+\.php$ - [F,L]
+RewriteRule ^wp-includes/js/tinymce/langs/.+\.php - [F,L]
+RewriteRule ^wp-includes/theme-compat/ - [F,L]
+
+</IfModule>
+
+# CHRONIMY PODSTAWOWE PLIKI JAK PONIŻEJ np. Gdy wpiszesz w przeglądarke => http://twoja-strona/wp-config.php
+
+<FilesMatch "^.*(error_log|debug.log|wp-config\.php|php.ini|\.[hH][tT][aApP].*)$">
+Order deny,allow
+Deny from all
+</FilesMatch>
+
+
+# BLOKOWANIE WordPress xmlrpc.php requests ( Tylko Jetpak Ma Dostęp )
+# https://wordpress.org/support/topic/does-this-plugin-block-jetpack/
+
+<FilesMatch "^(xmlrpc\.php|wp-trackback\.php)">
+    Order Deny,Allow
+    Deny from all
+    Allow from *.wordpress.com
+    Allow from 192.0.64.0/18
+    Allow from 185.64.140.0/22
+    Allow from 2a04:fa80::/29
+    Allow from 76.74.255.84
+    Allow from 76.74.255.85
+    Allow from 192.0.65.204
+    Allow from 192.0.65.205
+    Allow from 192.0.80.244
+    Allow from 192.0.80.246
+    Allow from 192.0.96.247
+    Allow from 192.0.96.248
+    Allow from 192.0.123.250
+    Satisfy All
+    ErrorDocument 403 http://google.com/
+</FilesMatch>
+
+
+Options All -Indexes
+
+RewriteCond %{QUERY_STRING} author=d
+
+RewriteRule ^ /? [L,R=301]
+
+
+# Ogranicz dostęp do plików PHP z katalogów pluginów i motywów
+
+RewriteCond %{REQUEST_URI} !^/wp-content/plugins/file/to/exclude\.php
+RewriteCond %{REQUEST_URI} !^/wp-content/plugins/directory/to/exclude/
+
+RewriteRule wp-content/plugins/(.*\.php)$ - [R=404,L]
+
+RewriteCond %{REQUEST_URI} !^/wp-content/themes/file/to/exclude\.php
+RewriteCond %{REQUEST_URI} !^/wp-content/themes/directory/to/exclude/
+RewriteRule wp-content/themes/(.*\.php)$ - [R=404,L]
+
+# BLOKOWANIE BOTÓW https://www.plothost.com/kb/block-bad-bots-via-htaccess/
+
+BrowserMatchNoCase "Baiduspider" bots
+BrowserMatchNoCase "SemrushBot" bots
+BrowserMatchNoCase "Yandex" bots
+BrowserMatchNoCase "BLEXBot" bots
+BrowserMatchNoCase "AhrefsBot" bots
+BrowserMatchNoCase "DotBot" bots
+BrowserMatchNoCase "Exabot" bots
+BrowserMatchNoCase "SeznamBot" bots
+BrowserMatchNoCase "aiHitBot" bots
+BrowserMatchNoCase "spbot" bots
+BrowserMatchNoCase "MJ12bot" bots
+BrowserMatchNoCase "oBot" bots
+BrowserMatchNoCase "DeuSu" bots
+BrowserMatchNoCase "ia_archiver" bots
+BrowserMatchNoCase "MetaURI" bots
+BrowserMatchNoCase "FlipboardProxy" bots
+
+
+Order Allow,Deny
+
+# ZABLOKUJ IP ( MUSISZ PODAĆ IP ORAZ USUNĄĆ KRATKĘ )
+# deny from 118.244.181.33
+# deny from 82.102.230.83
+
+Allow from ALL
+Deny from env=bots
+
+
+# END WordPress
+
+## ZRESTARTUJ APACHA ###
+
+sudo service apache2 restart
+
+
+10 - MOŻESZ DODAĆ ZABEZPIECZENIA DO SWOJEGO MOTYWU W PLIKU functions.php
+
+sudo vim /var/www/html/wp-content/themes/twentyseventeen/functions.php
+
+/** USUNIĘCIE WERSJI ZAINSTALOWANEGO WORDPRESSA => ZNAJDŹ W PODGLĄDZIE content="WordPress **/
+function wpversion_remove_version() {
+return '';
+}
+add_filter('the_generator', 'wpversion_remove_version');
+
+/** WYŁĄCZENIE JSON REST API JEŚLI NIE JESTEŚ ZALOGOWANY http://twoja-strona.pl/wp-json ( będzie widoczne jeśli się zalogujesz )**/
+ /** https://www.wpsaga.info/disable-wp-rest-api-v2/ **/
+
+add_filter( 'rest_authentication_errors', function( $result ) {
+if ( ! empty( $result ) ) {
+    return $result;
+}
+if ( ! is_user_logged_in() ) {
+    return new WP_Error( 'restx_logged_out', 'Musisz Być Zalogowany.', array( 'status' => 401 ) );
+}
+return $result;
+});
+
+
 
