@@ -1,0 +1,186 @@
+### 4 - INSTALACJA WORDPRESS NA UBUNTU SERVER 16.04 ###
+
+1 - DODAM BAZĘ DANYCH
+
+a) Połącz się z Bazą ---
+mysql -u root -p
+
+b) Utwórz bazę my_wp ---
+CREATE DATABASE my_wp DEFAULT CHARACTER SET utf8 COLLATE utf8_unicode_ci;
+
+c) Dodaj Wzystkie Przywileje dla użytkownika wp_user który ma hasło 123-passwd ---
+GRANT ALL ON my_wp.* TO 'wp_user'@'localhost' IDENTIFIED BY '123-passwd';
+
+d) Przeładuj Przywileje
+FLUSH PRIVILEGES;
+
+e) Pokaż jakie masz bazy dnych ... W tabelce Powinna być my_wp
+show databases;
+
+f) Wyjdź z Konsoli Mysql 
+exit;
+
+LUB DODAJ BAZĘ POPRZEZ PhpMyAdmin  => http://wordpress/phpmyadmin lub jak dodawaliśmy w poprzednim tutorilalu ( wordpress/UserMysql )
+
+2 - ZAINSTALUJMY DODATKI KTÓRE POTRZEBUJEMY DO INSTALACJI WORDPRESS
+sudo apt-get update
+sudo apt-get install php-curl php-gd php-mbstring php-mcrypt php-xml php-xmlrpc
+sudo systemctl restart apache2
+
+3 - DOSTOSUJ KONFIGURACJĘ APACHE DO ZEZWOLENIA NA PLIK .htaccess DZIĘKI KTÓEMU MAMY PRZYJAZNE ODNOŚNIKI ( MOD REWRITE )
+
+sudo vim /etc/apache2/apache2.conf
+
+### WKLEJ REGUŁĘ ###
+
+    <Directory /var/www/html/>
+        AllowOverride All
+    </Directory>
+
+### NASTĘPNIE WŁĄCZ MODUŁ REWRITE ###
+    sudo a2enmod rewrite
+
+### Restart apache2 ###
+    sudo service apache2 restart
+
+4 - POBIERANIE WORDPRESSA
+cd /tmp
+curl -O https://wordpress.org/latest.tar.gz
+tar xzvf latest.tar.gz
+
+### UTWORZYMY PLIK .htaccess ORAZ NADAMY MU PRAWA DOSTĘPU ###
+touch /tmp/wordpress/.htaccess
+chmod 660 /tmp/wordpress/.htaccess
+
+### TERAZ BĘDZIE KILKA DZIAŁAŃ NA PLIKACH ABY INSTALACJA PRZEBIEGŁA POMYŚLNIE ###
+cp /tmp/wordpress/wp-config-sample.php /tmp/wordpress/wp-config.php
+sudo mkdir /tmp/wordpress/wp-content/upgrade
+
+5 - ZABEZPIECZAM DODATKOWO NASZ FOLDER wp-admin za pomocą .htaccess ORAZ .htpasswd PODOBNIE JAK PRZY PHPMYADMIN
+-- TWORZĘ FOLDER W KTÓRYM BĘDZIE PLIK .htpasswd
+sudo mkdir /var/www/htpass
+
+-- DODDAJĘ PLIK .htaccess KTÓRY BĘDZIE WYMUSZAŁ LOGOWANIE ZA POMOCĄ PLIKU .htpasswd
+sudo vim /tmp/wordpress/wp-admin/.htaccess
+
+### WKLEJ ZAWARTOŚĆ ###
+AuthType Basic
+AuthName "Restricted Files"
+AuthUserFile /var/www/htpass/.htpasswd
+Require valid-user
+
+-- ZABEZPIECZMY NASZ PLIK .htaccess
+sudo chmod 660 /tmp/wordpress/wp-admin/.htaccess
+
+-- TWORZYMY NASZE HASŁO W KATALOGU htpass np użytkownik sammy password test***
+sudo htpasswd -c /var/www/htpass/.htpasswd user_name
+--- New Password: podaj_hasło np: test***
+--- Adding password for user alex => SUKCES
+
+6 - KOPIOWANIE NASZEJ INSTALACJI DO KATALOGU html ORAZ PODSTAWOWE ZABEZPIECZENIE
+
+sudo cp -a /tmp/wordpress/. /var/www/html
+
+sudo chown -R user_name:www-data /var/www/html
+
+sudo find /var/www/html -type d -exec chmod g+s {} \;
+
+sudo chmod g+w /var/www/html/wp-content
+
+sudo chmod -R g+w /var/www/html/wp-content/themes
+
+sudo chmod -R g+w /var/www/html/wp-content/plugins
+
+### PRZEJDŹMY DO KATALOGU INSTALACJI ORAZ ZOBACZMY NASZE PLIKI INSTALACYJNE ###
+cd /var/www/html
+clear
+ll
+clear
+
+7 - KONFIGURACJA PLIKU wp-config -- POŁĄCZENIE Z BAZĄ ORAZ KLUCZE ZABEZPIECZAJĄCE SALT
+
+--- POBIERAMY KLUCZE
+curl -s https://api.wordpress.org/secret-key/1.1/salt/
+
+--- SKOPIUJMY WYGENEROWANE KLUCZE
+Ctrl + Shift + C => Skopiuj
+
+--- ORAZ ZASTĄPMY POPRZEDNIE REGUŁY KLUCZY
+sudo vim /var/www/html/wp-config.php
+
+/** --- SKONFIGURUJMY POŁĄCZENIE Z BAZĄ DANYCH **/
+
+/** The name of the database for WordPress *define('DB_NAME', 'database_name_here'); **/
+define('DB_NAME', 'my_wp');
+
+/** MySQL database username */
+define('DB_USER', 'wp_user');
+
+/** MySQL database password */
+define('DB_PASSWORD', '123-passwd');
+
+
+/** DODAJ TABLE PREFIX PONIŻEJ KLUCZY SALT **/
+$table_prefix  = 't190wp_';
+
+
+/** EDYCJA STAŁYCH define() **/
+// https://codex.wordpress.org/Editing_wp-config.php   => POCZYTAJ WIĘCEJ O OPCJACH W PLIKU wp-config.php
+
+/** DODAJMY DEFOLTOWY JĘZYK **/
+define( 'WPLANG', 'pl_PL' );
+
+/** ZABEZPIECZANIE KATALOGÓW **/
+
+-- JEŚLI TEGO NIE UMIEŚCISZ TO BĘDZIESZ MIAŁ KŁOPOT Z DODAWANIEM WTYCZEK ORAZ MOTYWÓW ( jeśli użyłeś tej konfiguracji zabezpieczeń serwera )
+define('FS_METHOD', 'direct');
+
+// define( 'FS_CHMOD_DIR', ( 0755 & ~ umask() ) );
+// define( 'FS_CHMOD_FILE', ( 0644 & ~ umask() ) );
+
+
+/** WYŁĄCZAMY EDYCJĘ PLIKÓW WORDPRESS Z POZIOMU PRZEGLĄDARKI **/
+// define( 'DISALLOW_FILE_EDIT', true );
+
+/** WYŁĄCZNIE MOŻLIWOŚCI ZMIANY SZABLONU ORAZ WTYCZEK ( możesz odkomentować )**/
+// define( 'DISALLOW_FILE_MODS', true );
+
+/** VPS POWINIEN SOBIE DAĆ RADĘ **/
+
+       // LIMIT DLA PUBLIKI
+// define( 'WP_MEMORY_LIMIT', '512M' );
+
+       // LIMIT DLA ADMINA
+// define( 'WP_MAX_MEMORY_LIMIT', '512M' );
+
+/** JEŚLI CHCESZ TO MOŻESZ ZMIENIĆ OPCJE CRONA ( Ja z reguły wyłączam aby zaoszczędzić trochę mocy SERWERA )**/
+
+// define( 'DISABLE_WP_CRON', true ); // Wyłącz Crona
+// define( 'WP_CRON_LOCK_TIMEOUT', 60 );
+
+/** USUWANIE NIEPOTRZEBNYCH WPISÓW ORAZ POST REVISIONS ( ile ma zostać kopii wpisów jeśli były poprawki ) **/
+
+define( 'EMPTY_TRASH_DAYS', 0 ); // Zero days
+define( 'WP_POST_REVISIONS', 2 );
+
+// define( 'FORCE_SSL_ADMIN', true ); // JEŚLI CHCECIE SIĘ ŁĄCZYĆ ZA POMOCĄ SSL wp-admin
+
+/** JEŚLI CHCESZ MIEĆ MULTISITE TO ODKOMENTUJ **/
+// define( 'WP_ALLOW_MULTISITE', true );
+
+/** KONIEC DEFINICJI **/
+
+
+IDŹ DO http://your_domain/
+
+8 - JEŚLI CHCESZ NADAĆ WIĘKSZE PRAWA DO INSTALACJI PLUGINÓW ZMIANY MOTYWÓW UPDATE WORDPRESS itp. **/
+
+sudo chown -R www-data /var/www/html
+
+W CELU ZBEZPIECZENIA GDY ZAINSTALUJEMY WSZYSTKIE PLUGINY, SZABLONY ORAZ ZUPDATUJEMY WORDPRESSA:
+
+sudo chown -R user_name /var/www/html
+
+### Restart apache2 ###
+    sudo service apache2 restart
+

@@ -109,6 +109,18 @@ http://twoje_ip lub domena/info.php
 sudo rm info.php index.html
 exit
 
+10 - ZMIANA PARAMETRÓW W php.ini
+sudo vim /etc/php/7.0/apache2/php.ini
+### UPLOAD MAX FILE SIZE ABYŚMY MOGLI POBIERAĆ WIĘKSZE PLIKI np. obrazki, wtyczki, szablony wordpress ###
+upload_max_filesize = 20M
+
+### ORAZ DODAŁEM NIECO WIĘKSZE UŻYCIE PAMIĘCI RAM PRZEZ SKRYPT
+memory_limit = 512M
+
+### Restart apache2 ###
+    sudo service apache2 restart
+
+
 *********** END :) ************* LAMP SERVER STARTING ************** 
 
 ***************************************** 
